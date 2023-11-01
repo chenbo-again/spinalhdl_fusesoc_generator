@@ -1,0 +1,21 @@
+CAPI=2:
+
+name: chenbosoft:utils:generators:0.0.0
+
+generators:
+
+  spinalhdl:
+    interpreter: python3
+    command: spinalhdl.py
+    description: Build spinalhdl
+    usage: |
+      parameters:
+        spinal_parameter: # Parameters passed to the buildComponent method of FuseSocGeneratorBuilder, can get templates through the buildScript method.
+        output: 
+          files: # spinal project produce files, do not need modify once you get templates through the buildScript method.
+          - MyTopLevel.v:
+              file_type: "verilogSource"
+        target_directory: "./generte" # relative dir(base is spinal_project_path) or absolute dir of output files
+        entry_function: "fusespinal.MyTopLevelVerilog" # main method of spinal project which execute FuseSocGeneratorBuilder#run method
+        copy_core: false # copy entire spinal project to a temporary dir and generate
+        spinal_project_path: "." # spinal project path(which build.sbt located)
