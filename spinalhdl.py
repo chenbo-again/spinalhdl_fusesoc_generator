@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from copy import deepcopy
 from fusesoc.capi2.generator import Generator
 import os
 import shutil
@@ -13,21 +14,26 @@ import sys
 class SpinalHDLGenerator(Generator):
     def run(self):
         env = self.config.get('env', None)
-        buildtool = self.config.get('buildtool', "sbt")
-        spinal_project_path = os.path.join(self.files_root, self.config.get('spinal_project_path', '.'))
-        spinal_parameter = json.dumps(self.config.get('spinal_parameter', None), indent=None,  separators=(',', ':'))
+        cwd = self.files_root
+        # buildtool = self.config.get('buildtool', "sbt")
+        buildtool = "sbt"
+        spinal_project_path = os.path.join(cwd, self.config.get('spinal_project_path', '.'))
         entry_function = self.config.get('entry_function')
         copy_core = self.config.get('copy_core', False)
         if copy_core:
             tmp_dir = os.path.join(tempfile.mkdtemp(), 'core')
             shutil.copytree(spinal_project_path, tmp_dir,
                             ignore=shutil.ignore_patterns('out', 'generated'))
-        cwd = self.files_root
         spd = tmp_dir if copy_core else spinal_project_path
         target_directory = os.path.join(spd, self.config.get('target_directory', "generated"))
 
         files = self.config['output'].get('files', [])
         parameters = self.config['output'].get('parameters', {})
+        
+        config_parameter = deepcopy(self.config)
+        config_parameter['target_directory'] = target_directory
+        config_tmp_path = tempfile.mktemp()
+        utils.yaml_fwrite(config_tmp_path, config_parameter)
 
         # Find build tool, first in root dir, then ./scripts dir then in path
         buildcmd = []
@@ -40,9 +46,8 @@ class SpinalHDLGenerator(Generator):
 
         # Define command and arguments based on build tool
         if buildtool == "sbt":
-            args = ['runMain', entry_function, 
-                    '--spinal_parameter', spinal_parameter, 
-                    '--target_directory', target_directory]
+            args = ['runMain', entry_function,
+                    '--core_file_path', config_tmp_path]
         else:
             raise
         
